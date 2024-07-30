@@ -42,14 +42,20 @@ const (
 func PrepareHubConfig(tlsClientInsecure bool) (*rest.Config, error) {
 	hubURL, err := env.Lookup(hubServerURLEnvKey)
 	if err != nil {
-		klog.ErrorS(err, "Hub cluster endpoint URL cannot be empty")
+		klog.ErrorS(err, "Failed to lookup hub cluster endpoint URL")
 		return nil, err
+	}
+	if hubURL == "" {
+		return nil, errors.New("hub cluster endpoint URL cannot be empty")
 	}
 
 	tokenFilePath, err := env.Lookup(tokenConfigPathEnvKey)
 	if err != nil {
-		klog.ErrorS(err, "Hub token file path cannot be empty")
+		klog.ErrorS(err, "Failed to lookup hub token file path")
 		return nil, err
+	}
+	if tokenFilePath == "" {
+		return nil, errors.New("hub token file path cannot be empty")
 	}
 
 	// Retry on obtaining token file as it is created asynchronously by token-refesh container
@@ -76,6 +82,9 @@ func PrepareHubConfig(tlsClientInsecure bool) (*rest.Config, error) {
 		var caData []byte
 		hubCA, err := env.Lookup(hubCAEnvKey)
 		if err == nil {
+			if hubCA == "" {
+				return nil, errors.New("hub cluster certificate authority data cannot be empty")
+			}
 			caData, err = base64.StdEncoding.DecodeString(hubCA)
 			if err != nil {
 				klog.ErrorS(err, "Cannot decode hub cluster certificate authority data")
@@ -95,6 +104,9 @@ func PrepareHubConfig(tlsClientInsecure bool) (*rest.Config, error) {
 	// Sometime the hub cluster need additional http header for authentication or authorization.
 	// the "HUB_KUBE_HEADER" to allow sending custom header to hub's API Server for authentication and authorization.
 	if header, err := env.Lookup(hubKubeHeaderEnvKey); err == nil {
+		if header == "" {
+			return nil, errors.New("HUB_KUBE_HEADER cannot be empty")
+		}
 		r := textproto.NewReader(bufio.NewReader(strings.NewReader(header)))
 		h, err := r.ReadMIMEHeader()
 		if err != nil && !errors.Is(err, io.EOF) {

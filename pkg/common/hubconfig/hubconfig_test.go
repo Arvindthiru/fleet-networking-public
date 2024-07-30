@@ -40,12 +40,32 @@ func TestPrepareHubConfig(t *testing.T) {
 			},
 		},
 		{
+			name:                 "environment variable `HUB_SERVER_URL` is empty - error",
+			environmentVariables: map[string]string{hubServerURLEnvKey: ""},
+			tlsClientInsecure:    false,
+			validate: func(t *testing.T, config *rest.Config, err error) {
+				if err == nil {
+					t.Errorf("expect return error if HUB_SERVER_URL is empty")
+				}
+			},
+		},
+		{
 			name:                 "environment variable `CONFIG_PATH` is not present - error",
 			environmentVariables: map[string]string{hubServerURLEnvKey: fakeHubhubServerURLEnvVal, hubCAEnvKey: fakeCerhubCAEnvVal},
 			tlsClientInsecure:    false,
 			validate: func(t *testing.T, config *rest.Config, err error) {
 				if err == nil {
 					t.Errorf("expect return error if CONFIG_PATH not present")
+				}
+			},
+		},
+		{
+			name:                 "environment variable `CONFIG_PATH` is empty - error",
+			environmentVariables: map[string]string{hubServerURLEnvKey: fakeHubhubServerURLEnvVal, tokenConfigPathEnvKey: ""},
+			tlsClientInsecure:    false,
+			validate: func(t *testing.T, config *rest.Config, err error) {
+				if err == nil {
+					t.Errorf("expect return error if CONFIG_PATH is empty")
 				}
 			},
 		},
@@ -66,6 +86,16 @@ func TestPrepareHubConfig(t *testing.T) {
 				}
 				if !cmp.Equal(config, wantConfig) {
 					t.Errorf("got hub config %+v, want %+v", config, wantConfig)
+				}
+			},
+		},
+		{
+			name:                 "environment variable `HUB_CERTIFICATE_AUTHORITY` is empty tlsClientInsecure is false - error",
+			environmentVariables: map[string]string{hubServerURLEnvKey: fakeHubhubServerURLEnvVal, tokenConfigPathEnvKey: fakeConfigtokenConfigPathEnvVal, hubCAEnvKey: ""},
+			tlsClientInsecure:    false,
+			validate: func(t *testing.T, config *rest.Config, err error) {
+				if err == nil {
+					t.Errorf("expect return error if HUB_CERTIFICATE_AUTHORITY is empty")
 				}
 			},
 		},
@@ -121,6 +151,16 @@ func TestPrepareHubConfig(t *testing.T) {
 
 				if config.WrapTransport == nil {
 					t.Error("config.WrapTransport should not be nil if having HUB_KUBE_HEADER system variable")
+				}
+			},
+		},
+		{
+			name:                 "environment variable `HUB_KUBE_HEADER` is empty - error",
+			environmentVariables: map[string]string{hubServerURLEnvKey: fakeHubhubServerURLEnvVal, hubKubeHeaderEnvKey: "", tokenConfigPathEnvKey: fakeConfigtokenConfigPathEnvVal},
+			tlsClientInsecure:    true,
+			validate: func(t *testing.T, config *rest.Config, err error) {
+				if err == nil {
+					t.Errorf("expect return error if HUB_KUBE_HEADER is empty")
 				}
 			},
 		},
